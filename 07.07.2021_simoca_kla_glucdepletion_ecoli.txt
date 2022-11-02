@@ -1,0 +1,1058 @@
+#script (python)
+
+import clingo
+from scipy.integrate import odeint
+import numpy as np
+import math
+#import pandas
+
+def rxn(C,t):
+    Kap = 0.50831
+    Ksa = 0.0131
+    Kia = 1.2293
+    Ks = 0.0370
+    Kis = 2.1231
+    Ko = 0.0001
+    qAcmax = 0.1148
+    qm = 0.0129
+    qOmax = 13.4 * 31.9988 / 1000
+    qSmax = 0.6321
+    Yas = 0.9097
+    Yoa = 0.554
+    Yos = 1.5620
+    Yxa = 0.5718
+    Yem = 0.5333
+    Yxsof = 0.2268
+    pAmax = 0.2268
+    O_sat = 0.755
+
+    H = 1400
+
+
+
+    t_expfb_start = 3
+    t_constfb_start = 10
+    F0 = 0.000
+    SFR = 0.0005
+    tau = 35
+
+
+    k = 1
+
+    if (t >= t_expfb_start):
+        if (t < t_constfb_start):
+            Fin = F0 * math.exp(SFR * (t - t_expfb_start))
+            Fout = 0
+        else:
+            Fin = F0 * math.exp(SFR * (t_constfb_start - t_expfb_start))
+            Fout = 0
+    else:
+        Fin = 0
+        Fout = 0
+
+    F = Fin - Fout
+
+    qS = (qSmax / (1 + C[1] / Kia)) * (C[0] / (C[0] + Ks))
+    qSof = pAmax * (qS / (qS + Kap))
+    pA = qSof * Yas
+    qSox = (qS - qSof) * (C[2] / (C[2] + Ko))
+    qSan = (qSox - qm) * Yem * (0.488 / 0.391)
+    qsA = (qAcmax / (1 + (qS / Kis))) * (C[1] / (C[1] + Ksa))
+    qA = pA - qsA
+    mu = (qSox - qm) * Yem + qsA * Yxa + qSof * Yxsof
+    qO = Yos * (qSox - qSan) + qsA * Yoa
+
+
+    dGdt = - (qS * C[3])
+    dAdt = qA * C[3]
+    dOdt = C[5] * (O_sat - C[2])
+    dXdt = (mu) * C[3]
+    dVdt = 0
+    kla = 0
+
+    return [dGdt, dAdt, dOdt, dXdt, dVdt, kla]
+
+def aspode(G0, E0, O0, X0, V0, kla):
+
+    t_end = 30
+    t_start = 0
+    steps = (t_end - t_start) * 24
+    t = np.linspace(t_start, t_end, steps)
+
+
+    C0 = [G0.number/10000, E0.number/10000, O0.number/10000, X0.number/10000, V0.number/10000, kla.number]
+
+    C = odeint(rxn, C0, t, rtol=1e-5, mxstep=50000)
+    for C_i in range(len(C)):
+        yield clingo.Function('f',[int(C[C_i][0]), int(C[C_i][1]), int(C[C_i][2]), int(C[C_i][3]), int(C[C_i][4]), int(C[C_i][5])])
+
+#end.
+
+#pos(example_negative_948_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 2357)).
+
+}).
+
+#pos(example_negative_1973_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 9973)).
+
+}).
+
+#pos(example_negative_627_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 1100)).
+
+}).
+
+#pos(example_positive_233_0, {v}, {}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 139)).
+
+}).
+
+#pos(example_negative_1155_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 3691)).
+
+}).
+
+#pos(example_negative_59_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 9)).
+
+}).
+
+#pos(example_negative_1522_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 6536)).
+
+}).
+
+#pos(example_negative_1494_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 6948)).
+
+}).
+
+#pos(example_positive_362_1, {v}, {}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 379)).
+
+}).
+
+#pos(example_negative_1589_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 7163)).
+
+}).
+
+#pos(example_negative_872_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 2229)).
+
+}).
+
+#pos(example_negative_1970_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 11619)).
+
+}).
+
+#pos(example_positive_328_0, {v}, {}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 285)).
+
+}).
+
+#pos(example_positive_303_0, {v}, {}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 205)).
+
+}).
+
+#pos(example_positive_387_0, {v}, {}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 342)).
+
+}).
+
+#pos(example_negative_1055_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 2233)).
+
+}).
+
+#pos(example_negative_982_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 2044)).
+
+}).
+
+#pos(example_negative_671_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 1365)).
+
+}).
+
+
+#pos(example_negative_1643_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 7964)).
+
+}).
+
+#pos(example_negative_1365_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 5832)).
+
+}).
+
+#pos(example_positive_455_1, {v}, {}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 655)).
+
+}).
+
+
+#pos(example_negative_1981_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 9493)).
+
+}).
+
+#pos(example_negative_1562_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 5163)).
+
+}).
+
+#pos(example_negative_1454_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 3035)).
+
+}).
+
+#pos(example_negative_1455_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 5917)).
+
+}).
+
+#pos(example_negative_1522_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 7428)).
+
+}).
+
+#pos(example_negative_103_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 33)).
+
+}).
+
+#pos(example_negative_1165_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 2846)).
+
+}).
+
+#pos(example_positive_268_1, {v}, {}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 236)).
+
+}).
+
+#pos(example_negative_931_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 2092)).
+
+}).
+
+#pos(example_positive_473_0, {v}, {}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 562)).
+
+}).
+
+#pos(example_negative_1046_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 3448)).
+
+}).
+
+#pos(example_negative_1680_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 8924)).
+
+}).
+
+#pos(example_negative_1143_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 3824)).
+
+}).
+
+#pos(example_negative_93_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 28)).
+
+}).
+
+#pos(example_negative_779_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 1281)).
+
+}).
+
+
+#pos(example_positive_572_0, {v}, {}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 473)).
+
+}).
+
+#pos(example_negative_1287_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 4762)).
+
+}).
+
+#pos(example_negative_1768_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 5746)).
+
+}).
+
+
+#pos(example_negative_1863_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 9492)).
+
+}).
+
+#pos(example_negative_1063_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 3008)).
+
+}).
+
+#pos(example_negative_885_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 2141)).
+
+}).
+
+#pos(example_positive_691_0, {v}, {}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 962)).
+
+}).
+
+#pos(example_negative_1782_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 10105)).
+
+}).
+
+#pos(example_negative_1497_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 5128)).
+
+}).
+
+#pos(example_negative_1238_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 3717)).
+
+}).
+
+#pos(example_negative_846_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 1793)).
+
+}).
+
+#pos(example_negative_167_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 50)).
+
+}).
+
+#pos(example_negative_1305_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 4731)).
+
+}).
+
+#pos(example_negative_1141_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 4156)).
+
+}).
+
+#pos(example_negative_964_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 2957)).
+
+}).
+
+#pos(example_negative_1179_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 3602)).
+
+}).
+
+#pos(example_negative_943_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 2709)).
+
+}).
+
+#pos(example_positive_380_1, {v}, {}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 467)).
+
+}).
+
+#pos(example_positive_206_1, {v}, {}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 127)).
+
+}).
+
+#pos(example_negative_151_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 49)).
+
+}).
+
+#pos(example_negative_898_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 2400)).
+
+}).
+
+#pos(example_negative_1169_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 3364)).
+
+}).
+
+#pos(example_negative_872_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 1899)).
+
+}).
+
+#pos(example_negative_1026_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 3214)).
+
+}).
+
+#pos(example_negative_805_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 1996)).
+
+}).
+
+#pos(example_negative_1229_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 4663)).
+
+}).
+
+#pos(example_negative_659_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 1103)).
+
+}).
+
+#pos(example_positive_303_0, {v}, {}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 207)).
+
+}).
+
+#pos(example_negative_1253_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 4265)).
+
+}).
+
+#pos(example_positive_311_0, {v}, {}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 249)).
+
+}).
+
+#pos(example_negative_671_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 1441)).
+
+}).
+
+#pos(example_negative_1346_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 2598)).
+
+}).
+
+#pos(example_negative_1757_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 3803)).
+
+}).
+
+#pos(example_negative_1208_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 3522)).
+
+}).
+
+#pos(example_negative_701_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 1279)).
+
+}).
+
+#pos(example_negative_1539_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 7267)).
+
+}).
+
+#pos(example_negative_1619_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 5997)).
+
+}).
+
+#pos(example_negative_978_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 2859)).
+
+}).
+
+#pos(example_negative_1748_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 9594)).
+
+}).
+
+#pos(example_negative_1015_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 2064)).
+
+}).
+
+#pos(example_negative_1624_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 8232)).
+
+}).
+
+#pos(example_negative_1658_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 7882)).
+
+}).
+
+#pos(example_negative_95_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 17)).
+
+}).
+
+#pos(example_negative_1721_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 8271)).
+
+}).
+
+#pos(example_positive_420_0, {v}, {}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 478)).
+
+}).
+
+#pos(example_negative_1439_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 6320)).
+
+}).
+
+#pos(example_negative_1787_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 9505)).
+
+}).
+
+#pos(example_negative_1219_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 4614)).
+
+}).
+
+#pos(example_negative_1534_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 6298)).
+
+}).
+
+#pos(example_negative_1024_0, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 2261)).
+
+}).
+
+
+#pos(example_positive_471_0, {v}, {}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 246)).
+
+}).
+
+#pos(example_negative_1218_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 4194)).
+
+}).
+
+#pos(example_negative_1103_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 3615)).
+
+}).
+
+#pos(example_negative_1789_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 9597)).
+
+}).
+
+#pos(example_negative_1597_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 8033)).
+
+}).
+
+#pos(example_negative_112_1, {}, {v}, {
+concentration(@aspode(110000, 34, 75, 100, 20000, 39)).
+
+}).
+
+#pos(example_positive_0, {v}, {}, {
+concentration(@aspode(16237, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_1, {v}, {}, {
+concentration(@aspode(10111, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_2, {v}, {}, {
+concentration(@aspode(8498, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_4, {v}, {}, {
+concentration(@aspode(3479, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_5, {v}, {}, {
+concentration(@aspode(7522, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_6, {v}, {}, {
+concentration(@aspode(4413, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_7, {v}, {}, {
+concentration(@aspode(11637, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_8, {v}, {}, {
+concentration(@aspode(8377, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_9, {v}, {}, {
+concentration(@aspode(5108, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_10, {v}, {}, {
+concentration(@aspode(11742, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_11, {v}, {}, {
+concentration(@aspode(4292, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_12, {v}, {}, {
+concentration(@aspode(3830, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_14, {v}, {}, {
+concentration(@aspode(7746, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_15, {v}, {}, {
+concentration(@aspode(14729, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_16, {v}, {}, {
+concentration(@aspode(10336, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_17, {v}, {}, {
+concentration(@aspode(11959, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_18, {v}, {}, {
+concentration(@aspode(7118, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_19, {v}, {}, {
+concentration(@aspode(15022, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_20, {v}, {}, {
+concentration(@aspode(3836, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_21, {v}, {}, {
+concentration(@aspode(13073, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_22, {v}, {}, {
+concentration(@aspode(8126, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_23, {v}, {}, {
+concentration(@aspode(8174, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_24, {v}, {}, {
+concentration(@aspode(14483, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_25, {v}, {}, {
+concentration(@aspode(9980, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_26, {v}, {}, {
+concentration(@aspode(10105, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_27, {v}, {}, {
+concentration(@aspode(5732, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_28, {v}, {}, {
+concentration(@aspode(3045, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_29, {v}, {}, {
+concentration(@aspode(17770, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_32, {v}, {}, {
+concentration(@aspode(13265, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_33, {v}, {}, {
+concentration(@aspode(8366, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_34, {v}, {}, {
+concentration(@aspode(16227, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_35, {v}, {}, {
+concentration(@aspode(15809, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_36, {v}, {}, {
+concentration(@aspode(17558, 34, 75, 100, 20000, 1008)).
+
+}).
+
+
+#pos(example_positive_38, {v}, {}, {
+concentration(@aspode(9123, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_39, {v}, {}, {
+concentration(@aspode(9381, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_40, {v}, {}, {
+concentration(@aspode(3027, 34, 75, 100, 20000, 1008)).
+
+}).
+
+
+#pos(example_positive_41, {v}, {}, {
+concentration(@aspode(5642, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_42, {v}, {}, {
+concentration(@aspode(4591, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_43, {v}, {}, {
+concentration(@aspode(8479, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_44, {v}, {}, {
+concentration(@aspode(14670, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_45, {v}, {}, {
+concentration(@aspode(16785, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_46, {v}, {}, {
+concentration(@aspode(3536, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_47, {v}, {}, {
+concentration(@aspode(10790, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_48, {v}, {}, {
+concentration(@aspode(2486, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_49, {v}, {}, {
+concentration(@aspode(2700, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_50, {v}, {}, {
+concentration(@aspode(14898, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_51, {v}, {}, {
+concentration(@aspode(9996, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_52, {v}, {}, {
+concentration(@aspode(7376, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_53, {v}, {}, {
+concentration(@aspode(2469, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_54, {v}, {}, {
+concentration(@aspode(3624, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_55, {v}, {}, {
+concentration(@aspode(12006, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_56, {v}, {}, {
+concentration(@aspode(3760, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_57, {v}, {}, {
+concentration(@aspode(11424, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_58, {v}, {}, {
+concentration(@aspode(5074, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_59, {v}, {}, {
+concentration(@aspode(3902, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_60, {v}, {}, {
+concentration(@aspode(12390, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_61, {v}, {}, {
+concentration(@aspode(16428, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_62, {v}, {}, {
+concentration(@aspode(13591, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_63, {v}, {}, {
+concentration(@aspode(16913, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_64, {v}, {}, {
+concentration(@aspode(3929, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_65, {v}, {}, {
+concentration(@aspode(7358, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_66, {v}, {}, {
+concentration(@aspode(5439, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_67, {v}, {}, {
+concentration(@aspode(4763, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_68, {v}, {}, {
+concentration(@aspode(7868, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_69, {v}, {}, {
+concentration(@aspode(12580, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_70, {v}, {}, {
+concentration(@aspode(15229, 34, 75, 100, 20000, 1008)).
+
+}).
+
+
+#pos(example_positive_72, {v}, {}, {
+concentration(@aspode(16033, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_74, {v}, {}, {
+concentration(@aspode(4377, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_75, {v}, {}, {
+concentration(@aspode(8436, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_76, {v}, {}, {
+concentration(@aspode(14743, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_77, {v}, {}, {
+concentration(@aspode(2775, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_78, {v}, {}, {
+concentration(@aspode(5280, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_79, {v}, {}, {
+concentration(@aspode(8471, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_81, {v}, {}, {
+concentration(@aspode(2245, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_82, {v}, {}, {
+concentration(@aspode(2213, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_83, {v}, {}, {
+concentration(@aspode(17880, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_84, {v}, {}, {
+concentration(@aspode(11143, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_85, {v}, {}, {
+concentration(@aspode(2195, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_86, {v}, {}, {
+concentration(@aspode(7094, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_87, {v}, {}, {
+concentration(@aspode(13051, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_88, {v}, {}, {
+concentration(@aspode(5352, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_89, {v}, {}, {
+concentration(@aspode(7654, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_90, {v}, {}, {
+concentration(@aspode(11073, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_91, {v}, {}, {
+concentration(@aspode(17275, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_92, {v}, {}, {
+concentration(@aspode(9894, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_93, {v}, {}, {
+concentration(@aspode(17346, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_94, {v}, {}, {
+concentration(@aspode(16046, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_95, {v}, {}, {
+concentration(@aspode(12798, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_96, {v}, {}, {
+concentration(@aspode(15786, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_97, {v}, {}, {
+concentration(@aspode(10106, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_98, {v}, {}, {
+concentration(@aspode(12125, 34, 75, 100, 20000, 1008)).
+
+}).
+
+#pos(example_positive_99, {v}, {}, {
+concentration(@aspode(8096, 34, 75, 100, 20000, 1008)).
+
+}).
+
+
+concentration_value(1, T, N):- concentration(T), T = f(N,_,_,_,_,_).
+concentration_value(2, T, N):- concentration(T), T = f(_,N,_,_,_,_).
+concentration_value(3, T, N):- concentration(T), T = f(_,_,N,_,_,_).
+concentration_value(4, T, N):- concentration(T), T = f(_,_,_,N,_,_).
+concentration_value(5, T, N):- concentration(T), T = f(_,_,_,_,N,_).
+concentration_value(6, T, N):- concentration(T), T = f(_,_,_,_,_,N).
+v :- not invalid.
+
+#modeh(invalid).
+#modeb(2, concentration_value(const(index),var(time),var(num))).
+#modeb(2, const(num) > var(num)).
+#modeb(2, var(num) > const(num)).
+
+#bias(":- body(concentration_value(X,Y,V)), body(concentration_value(X2,Y2,V)), (X, Y)<(X2, Y2).").
+#bias(":- body(concentration_value(X,Y,V)), body(naf(concentration_value(X2,Y2,V))).").
+#bias(":- body(bin_exp(\">\", C1, V)), body(bin_exp(\">\", C2, V)), C1 > C2, var(V, _).").
+#bias(":- body(bin_exp(\">\", V, C1)), body(bin_exp(\">\", V, C2)), C1 > C2, var(V, _).").
+#bias(":- body(bin_exp(\">\", V, C1)), body(bin_exp(\">\", C2, V)), C1 >= C2 - 1, var(V, _).").
+#bias(":- body(concentration_value(X,Y,V)), anon(V).").
+#bias(":- body(concentration_value(X,Y,V)), body(concentration_value(X, Y, V2)), V < V2.").
+#bias("no_constraints.").
+
+#constant(index, 1).
+#constant(index, 2).
+#constant(index, 3).
+#constant(index, 4).
+#constant(index, 5).
+#constant(index, 6).
+
+#constant(num, 20000).
+#constant(num, 10000).
+#constant(num, 1500).
+#constant(num, 1000).
+#constant(num, 100).
+#constant(num, 10).
+#constant(num, 1).
+#constant(num, 0).
+#maxv(3).
+
